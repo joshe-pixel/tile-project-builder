@@ -24,6 +24,11 @@ use_legacy_install_flow = false
 [auth]
 redirect_urls = [ ]
 
+[app_proxy]
+url = "https://shopify-projects-app.onrender.com/api"
+subpath = "projects"
+prefix = "apps"
+
 [metaobjects.app.faq]
 name = "FAQ"
 
@@ -51,9 +56,3 @@ type = "metaobject_reference<$app:faq>"
 
 [sidekick]
 extensions_summary = "Read FAQ entries stored in the app"
-
-[app_proxy]
-url = "https://shopify-projects-app.onrender.com/api"
-subpath = "projects"
-prefix = "apps"
-
