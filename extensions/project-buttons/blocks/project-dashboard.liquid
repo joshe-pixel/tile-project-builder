@@ -1,0 +1,393 @@
+{% schema %}
+{
+  "name": "Project Workspace",
+  "target": "section",
+  "templates": ["page", "article", "index", "product"],
+  "settings": []
+}
+{% endschema %}
+
+<style>
+  /* PREMIUM AESTHETIC UPGRADE */
+  .earp-workspace-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    font-family: inherit;
+    color: #111;
+  }
+  .earp-login-prompt {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px dashed #ccc;
+  }
+  .earp-board {
+    background: #ffffff;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    margin-bottom: 40px;
+  }
+  .earp-board-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+  .earp-board-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .earp-rooms-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    align-items: flex-start;
+  }
+  .earp-room {
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 20px;
+    flex: 1;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+  .earp-room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eaeaea;
+  }
+  .earp-tile {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    cursor: grab;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .earp-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+  .earp-tile-img {
+    width: 65px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #f0f0f0;
+    flex-shrink: 0;
+  }
+  .earp-tile-info {
+    flex-grow: 1;
+    min-width: 0;
+  }
+  .earp-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .earp-btn-primary { background: #000; color: #fff; }
+  .earp-btn-danger { background: #fce8e6; color: #c5221f; border: 1px solid #fad2cf; }
+  .earp-btn-outline { background: #fff; border: 1px solid #ccc; color: #333; }
+  .earp-btn-text { background: none; color: #1a73e8; text-decoration: underline; padding: 0; font-size: 12px; }
+  .earp-action-row { display: flex; gap: 10px; align-items: center; }
+  .sortable-ghost { opacity: 0.4; background: #eef2f7; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+<div class="earp-workspace-container" id="earp-workspace-root">
+  {% if customer %}
+    <div style="text-align: center; padding: 50px;">
+      <h3 style="color: #666;">Loading your project boards...</h3>
+    </div>
+  {% else %}
+    <div class="earp-login-prompt">
+      <h2>Project Workspace</h2>
+      <p style="margin-bottom: 20px;">Please log in to your store account to view and manage your custom layout projects.</p>
+      <a href="/account/login" class="earp-btn earp-btn-primary">Log In to Account</a>
+    </div>
+  {% endif %}
+</div>
+
+<div id="sampleRequestModal" style="display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+  <div style="background: #fff; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); position: relative;">
+    <span onclick="closeSampleModal()" style="position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; color: #666;">&times;</span>
+    <h3 style="margin: 0 0 20px 0;">📦 Request Project Room Samples</h3>
+    <form id="sampleAddressForm" onsubmit="submitSampleRequest(event)" style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;"><input type="text" id="ns-first-name" required placeholder="First Name" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;"></div>
+        <div style="flex: 1;"><input type="text" id="ns-last-name" required placeholder="Last Name" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;"></div>
+      </div>
+      <div><input type="email" id="ns-email" required placeholder="Email Address" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;"></div>
+      <div><input type="tel" id="ns-phone" required placeholder="Contact Number" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;"></div>
+      <div><input type="text" id="ns-addr1" required placeholder="Street Address (Australia Only)" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;"></div>
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 2;"><input type="text" id="ns-suburb" required placeholder="Suburb" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;"></div>
+        <div style="flex: 1;"><input type="text" id="ns-state" required placeholder="State" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;"></div>
+        <div style="flex: 1;"><input type="text" id="ns-postcode" required placeholder="Postcode" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;"></div>
+      </div>
+      <button type="submit" class="earp-btn" style="background:#137333; color:#fff; width:100%; padding:12px; margin-top:10px;">Submit to NetSuite</button>
+    </form>
+  </div>
+</div>
+
+{% if customer %}
+<script>
+  const customerId = "{{ customer.id }}";
+  const rootElement = document.getElementById('earp-workspace-root');
+
+  let currentActiveSectionId = null;
+  let currentActiveProjectName = '';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchDashboardData();
+  });
+
+  // 📡 1. THE DATA FETCH (Calling our new pure API)
+  function fetchDashboardData() {
+    fetch(`/apps/projects/api?logged_in_customer_id=${customerId}`)
+      .then(res => res.json())
+      .then(data => {
+        if(data.success) {
+          renderDashboard(data.workspace);
+        } else {
+          rootElement.innerHTML = `<p style="color:red;">Error loading workspace: ${data.error}</p>`;
+        }
+      })
+      .catch(err => {
+        rootElement.innerHTML = `<p style="color:red;">Network transmission failed.</p>`;
+        console.error(err);
+      });
+  }
+
+  // 🖌️ 2. THE UI RENDERER (Builds the DOM cleanly using the JSON payload)
+  function renderDashboard(projects) {
+    if(!projects || projects.length === 0) {
+      rootElement.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+          <h1>My Project Workspace</h1>
+        </div>
+        <div class="earp-login-prompt">
+          <p>You haven't created any project boards yet. Go to a product page to get started!</p>
+        </div>`;
+      return;
+    }
+
+    let html = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+        <h1>My Project Workspace</h1>
+      </div>
+    `;
+
+    projects.forEach(proj => {
+      const safeProjName = proj.project_name.replace(/'/g, "\\'");
+      html += `
+        <div class="earp-board">
+          <div class="earp-board-header">
+            <h4 class="earp-board-title">🏗️ ${proj.project_name}</h4>
+            <div class="earp-action-row">
+              <input type="text" id="new-sec-name-${proj.id}" placeholder="New Room Name..." style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+              <button onclick="createNewSection('${proj.id}')" class="earp-btn earp-btn-outline">+ Add Room</button>
+              <a href="/apps/projects/api/projects/export/${proj.id}" target="_blank" class="earp-btn earp-btn-primary">📄 Export Spec Sheet</a>
+              <button onclick="deleteEntireProject('${proj.id}')" class="earp-btn earp-btn-danger">🗑️ Delete</button>
+            </div>
+          </div>
+          <div class="earp-rooms-wrapper">
+      `;
+
+      if(proj.sections && proj.sections.length > 0) {
+        proj.sections.forEach(sec => {
+          html += `
+            <div class="earp-room">
+              <div class="earp-room-header">
+                <h5 style="margin:0; font-size:16px;">📐 ${sec.section_name}</h5>
+                <button onclick="deleteRoomSection('${sec.id}')" style="background:none; border:none; cursor:pointer; color:#999;" title="Delete Room">🗑️</button>
+              </div>
+              <div style="display:flex; gap:15px; margin-bottom:15px;">
+                <button onclick="addSectionToCart('${sec.id}')" class="earp-btn-text">🛒 Add Room to Cart</button>
+                <button onclick="openSampleModal('${sec.id}', '${safeProjName}')" class="earp-btn-text" style="color:#137333;">📦 Request Samples</button>
+              </div>
+              <div class="section-drag-zone" data-section-id="${sec.id}" style="min-height:80px; padding:5px; background:rgba(0,0,0,0.02); border-radius:6px;">
+          `;
+
+          if(sec.items && sec.items.length > 0) {
+            sec.items.forEach(item => {
+              const info = item.variant_info || {};
+              html += `
+                <div class="earp-tile drag-item" data-item-id="${item.id}" data-variant-id="${item.shopify_variant_id}" data-sku="${info.sku || ''}">
+                  ${info.thumbnailUrl ? `<img src="${info.thumbnailUrl}" class="earp-tile-img">` : ''}
+                  <div class="earp-tile-info">
+                    <h6 style="margin:0 0 4px 0; font-size:14px;">${info.productTitle || item.product_handle}</h6>
+                    <div style="font-size:12px; color:#666;">Variant: ${info.variantTitle}</div>
+                    <div style="font-size:12px; font-weight:bold; margin-top:4px;">${info.priceFormatted} | P-Rating: ${info.pRating}</div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:8px;">
+                    <a href="/products/${item.product_handle}?variant=${item.shopify_variant_id}" class="earp-btn earp-btn-outline" style="padding:4px 8px; font-size:11px;">View</a>
+                    <button onclick="deleteSavedItem('${item.id}')" style="background:none; border:none; color:#d93025; font-size:11px; cursor:pointer; text-decoration:underline; padding:0;">Remove</button>
+                  </div>
+                </div>
+              `;
+            });
+          }
+          html += `</div></div>`; // Close drag-zone & room
+        });
+      } else {
+        html += `<p style="color:#666; font-style:italic;">No rooms created yet. Add one above!</p>`;
+      }
+      
+      html += `</div></div>`; // Close rooms-wrapper & board
+    });
+
+    rootElement.innerHTML = html;
+    attachDragAndDrop();
+  }
+
+  // 🖱️ 3. REATTACH DRAG & DROP
+  function attachDragAndDrop() {
+    const zones = document.querySelectorAll('.section-drag-zone');
+    zones.forEach(zone => {
+      new Sortable(zone, {
+        group: 'project-shared-items',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onAdd: function (evt) {
+          const itemId = evt.item.getAttribute('data-item-id');
+          const targetSectionId = evt.to.getAttribute('data-section-id');
+          fetch('/apps/projects/api/items/move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemId: itemId, targetSectionId: targetSectionId })
+          });
+        }
+      });
+    });
+  }
+
+  // ⚡ 4. INTERACTION PIPELINES
+  function deleteSavedItem(itemId) {
+    if (!confirm("Remove this material?")) return;
+    fetch('/apps/projects/api/items/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId })
+    }).then(res => res.json()).then(data => { if(data.success) fetchDashboardData(); });
+  }
+
+  function deleteRoomSection(sectionId) {
+    if (!confirm("Delete this entire room?")) return;
+    fetch('/apps/projects/api/sections/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sectionId })
+    }).then(res => res.json()).then(data => { if(data.success) fetchDashboardData(); });
+  }
+
+  function deleteEntireProject(projectId) {
+    if (!confirm("⚠️ DANGER: Delete entire project?")) return;
+    fetch('/apps/projects/api/projects/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId })
+    }).then(res => res.json()).then(data => { if(data.success) fetchDashboardData(); });
+  }
+
+  function createNewSection(projectId) {
+    const name = document.getElementById('new-sec-name-' + projectId).value.trim();
+    if(!name) return alert('Please enter a room name.');
+    fetch('/apps/projects/api/sections/create', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId, sectionName: name })
+    }).then(res => res.json()).then(data => { if(data.success) fetchDashboardData(); });
+  }
+
+  // 🛒 5. NETSUITE & CART MODALS
+  function openSampleModal(sectionId, projectName) {
+    currentActiveSectionId = sectionId;
+    currentActiveProjectName = projectName;
+    document.getElementById('sampleRequestModal').style.display = 'flex';
+  }
+
+  function closeSampleModal() {
+    document.getElementById('sampleRequestModal').style.display = 'none';
+    document.getElementById('sampleAddressForm').reset();
+  }
+
+  function submitSampleRequest(e) {
+    e.preventDefault();
+    const zone = document.querySelector('.section-drag-zone[data-section-id="' + currentActiveSectionId + '"]');
+    const tileCards = zone.querySelectorAll('.drag-item');
+    if(tileCards.length === 0) return alert('Cannot submit requests for empty rooms!');
+
+    let collectedItems = [];
+    tileCards.forEach(card => {
+      collectedItems.push({
+        shopifyVariantId: card.getAttribute('data-variant-id'),
+        sku: card.getAttribute('data-sku')
+      });
+    });
+
+    const payload = {
+      projectName: currentActiveProjectName,
+      customerDetails: {
+        firstName: document.getElementById('ns-first-name').value.trim(),
+        lastName: document.getElementById('ns-last-name').value.trim(),
+        email: document.getElementById('ns-email').value.trim(),
+        phone: document.getElementById('ns-phone').value.trim(),
+        address1: document.getElementById('ns-addr1').value.trim(),
+        suburb: document.getElementById('ns-suburb').value.trim(),
+        state: document.getElementById('ns-state').value.trim(),
+        postcode: document.getElementById('ns-postcode').value.trim()
+      },
+      items: collectedItems
+    };
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.innerText = 'Processing...'; submitBtn.disabled = true;
+
+    fetch('/apps/projects/api/projects/request-samples', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        alert('✨ Success! Samples requested.');
+        closeSampleModal();
+      } else { alert('Error: ' + data.error); }
+    })
+    .finally(() => {
+      submitBtn.innerText = 'Submit to NetSuite'; submitBtn.disabled = false;
+    });
+  }
+
+  function addSectionToCart(sectionId) {
+    const items = document.querySelectorAll('.section-drag-zone[data-section-id="' + sectionId + '"] .drag-item');
+    if(items.length === 0) return alert('This room is empty!');
+    let cartItems = [];
+    items.forEach(item => {
+      const vId = item.getAttribute('data-variant-id');
+      if(vId) cartItems.push({ id: parseInt(vId), quantity: 1 });
+    });
+    fetch('/cart/add.js', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: cartItems })
+    }).then(() => window.location.href = '/cart').catch(() => alert("Error bundling cart."));
+  }
+</script>
+{% endif %}
