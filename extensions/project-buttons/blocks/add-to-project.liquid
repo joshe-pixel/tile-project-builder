@@ -1,230 +1,221 @@
-<div class="tile-project-wrapper" style="margin: 20px 0;">
-  {% if customer %}
-    <button id="openProjectModalBtn" class="button button--secondary" 
-            data-customer-id="{{ customer.id }}"
-            data-product-handle="{{ product.handle }}"
-            style="width: 100%; padding: 12px; font-weight: bold; cursor: pointer;">
-      Add to Project
-    </button>
-  {% else %}
-    <a href="/account/login" class="button" style="display: block; text-align: center; text-decoration: none; padding: 12px;">
-      Log in to Add to Project
-    </a>
-  {% endif %}
-</div>
+{% if customer %}
+  <button id="ep-trigger-modal-btn" type="button" class="button" style="width: 100%; margin-top: 10px; background: #fff; border: 1px solid #000; color: #000; padding: 12px; font-weight: bold; cursor: pointer;">
+    Add to Project
+  </button>
+{% else %}
+  <a href="/account/login" class="button" style="width: 100%; display: block; text-align: center; margin-top: 10px; background: #fff; border: 1px solid #000; color: #000; padding: 12px; font-weight: bold; text-decoration: none; box-sizing: border-box;">
+    Log In to Save to Project
+  </a>
+{% endif %}
 
-<div id="projectModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
-  <div style="background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 450px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative; font-family: sans-serif;">
+<div id="epProjectModal" style="display: none; position: fixed; z-index: 999999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; font-family: sans-serif;">
+  <div style="background: #fff; padding: 30px; border-radius: 8px; width: 90%; max-width: 460px; box-shadow: 0 4px 25px rgba(0,0,0,0.15); position: relative; box-sizing: border-box;">
+    <span id="ep-close-modal-span" style="position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; color: #666;">&times;</span>
     
-    <span id="closeProjectModal" style="position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; color: #666;">&times;</span>
+    <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: bold; color: #000;">Add Material to Project</h3>
     
-    <h3 style="margin-top: 0; margin-bottom: 20px; color: #333;">Add Product to Project</h3>
-    
-    <div id="modalLoadingState" style="display: block; text-align: center; padding: 20px 0;">
-      <p style="color: #666;">Loading your projects...</p>
-    </div>
-
-    <div id="modalMainState" style="display: none;">
-      <div id="existingProjectsGroup" style="margin-bottom: 20px;">
-        <label for="projectSelect" style="display: block; margin-bottom: 8px; font-weight: bold; color: #444;">Select Project:</label>
-        <select id="projectSelect" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div>
+        <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px;">Select Project Board</label>
+        <select id="ep-project-select" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff; font-size: 14px;">
+          <option value="">Loading project boards...</option>
         </select>
+        <input type="text" id="ep-new-project-input" placeholder="Enter New Project Name..." style="display: none; width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 8px; font-size: 14px; box-sizing: border-box;">
       </div>
 
-      <div id="newProjectGroup" style="margin-bottom: 20px; display: none;">
-        <label for="newProjectName" style="display: block; margin-bottom: 8px; font-weight: bold; color: #444;">New Project Name:</label>
-        <input type="text" id="newProjectName" placeholder="e.g., Master Bathroom Floor" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px;">
+      <div id="ep-section-wrapper" style="display: none;">
+        <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px;">Select Room/Area</label>
+        <select id="ep-section-select" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff; font-size: 14px;">
+          <option value="">-- Choose Room/Area --</option>
+        </select>
+        <input type="text" id="ep-new-section-input" placeholder="Enter New Room/Area Name..." style="display: none; width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 8px; font-size: 14px; box-sizing: border-box;">
       </div>
 
-      <button id="confirmAddBtn" class="button" style="width: 100%; padding: 12px; background: #000; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
-        Confirm & Save Item
+      <button type="button" id="ep-submit-add-btn" style="width: 100%; padding: 12px; background: #000; color: #fff; border: 1px solid #000; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; letter-spacing: 0.5px;">
+        Add to Project
       </button>
     </div>
-
-    <div id="modalStatusMessage" style="display: none; margin-top: 15px; padding: 10px; text-align: center; border-radius: 4px; font-size: 14px;"></div>
   </div>
 </div>
 
 <script>
-  // 1. MASTER REGISTRY: Pre-compile every single variant + its unique metafields into a JavaScript lookup dictionary
-  const shopifyVariantRegistry = {
-    {% for variant in product.variants %}
-      "{{ variant.id }}": {
-        productTitle: "{{ product.title | escape }}",
-        variantTitle: "{{ variant.title | escape }}",
-        priceFormatted: "{{ variant.price | money }}",
-        thumbnailUrl: "{{ variant.featured_image | default: product.featured_image | img_url: '240x240' }}",
-        pRating: "{{ variant.metafields.custom.p_rating.value | default: 'N/A' | escape }}",
-        // ✅ CRITICAL FIX: The variant SKU is now actively mapped and captured on every load!
-        sku: "{{ variant.sku | escape }}"
-      }{% unless forloop.last %},{% endunless %}
-    {% endfor %}
-  };
+document.addEventListener('DOMContentLoaded', function() {
+  const triggerBtn = document.getElementById('ep-trigger-modal-btn');
+  const modal = document.getElementById('epProjectModal');
+  const closeModal = document.getElementById('ep-close-modal-span');
+  const projectSelect = document.getElementById('ep-project-select');
+  const sectionSelect = document.getElementById('ep-section-select');
+  const newProjInput = document.getElementById('ep-new-project-input');
+  const newSecInput = document.getElementById('ep-new-section-input');
+  const sectionWrapper = document.getElementById('ep-section-wrapper');
+  const submitBtn = document.getElementById('ep-submit-add-btn');
 
-  // Helper function to extract whatever variant ID the storefront is actively showing
-  function getActiveVariantId() {
-    const hiddenInput = document.querySelector('form[action*="/cart/add"] input[name="id"]');
-    if (hiddenInput && hiddenInput.value) return hiddenInput.value;
+  let workspaceCachedData = [];
+  const customerId = "{{ customer.id }}";
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlVariant = urlParams.get('variant');
-    if (urlVariant) return urlVariant;
+  if (!triggerBtn) return;
 
-    return "{{ product.selected_or_first_available_variant.id }}";
+  // 🔄 Trigger Modal: Open Frame and Fetch Live User Datasets
+  triggerBtn.addEventListener('click', function() {
+    modal.style.display = 'flex';
+    fetchProjectsJson();
+  });
+
+  closeModal.addEventListener('click', function() { modal.style.display = 'none'; });
+  modal.addEventListener('click', function(e) { if(e.target === modal) modal.style.display = 'none'; });
+
+  function fetchProjectsJson() {
+    fetch('/apps/projects/api/projects-json?customer_id=' + customerId)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          workspaceCachedData = data.workspace || [];
+          populateProjectsDropdown();
+        }
+      });
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
-    const openBtn = document.getElementById('openProjectModalBtn');
-    const modal = document.getElementById('projectModal');
-    const closeBtn = document.getElementById('closeProjectModal');
-    const confirmBtn = document.getElementById('confirmAddBtn');
+  function populateProjectsDropdown() {
+    projectSelect.innerHTML = '<option value="">-- Choose Existing Project --</option>';
+    workspaceCachedData.forEach(proj => {
+      const opt = document.createElement('option');
+      opt.value = proj.id;
+      opt.textContent = proj.project_name;
+      projectSelect.appendChild(opt);
+    });
+    const createOpt = document.createElement('option');
+    createOpt.value = "__CREATE_NEW__";
+    createOpt.textContent = "[+ Create New Project]";
+    projectSelect.appendChild(createOpt);
+  }
+
+  // 🔄 Watch Project Dropdown Selections
+  projectSelect.addEventListener('change', function() {
+    const val = this.value;
+    newProjInput.style.display = 'none';
+    newSecInput.style.display = 'none';
+    sectionSelect.innerHTML = '<option value="">-- Choose Room/Area --</option>';
     
-    const loadingState = document.getElementById('modalLoadingState');
-    const mainState = document.getElementById('modalMainState');
-    const existingGroup = document.getElementById('existingProjectsGroup');
-    const newGroup = document.getElementById('newProjectGroup');
-    
-    const projectSelect = document.getElementById('projectSelect');
-    const newProjectInput = document.getElementById('newProjectName');
-    const statusDiv = document.getElementById('modalStatusMessage');
-
-    let customerId = openBtn ? openBtn.getAttribute('data-customer-id') : null;
-    let productHandle = openBtn ? openBtn.getAttribute('data-product-handle') : null;
-    let userProjects = [];
-
-    if (!openBtn) return;
-
-    // Open Modal Action
-    openBtn.addEventListener('click', function() {
-      modal.style.display = 'flex';
-      loadingState.style.display = 'block';
-      mainState.style.display = 'none';
-      statusDiv.style.display = 'none';
-      
-      fetch(`/apps/projects/api/projects/${customerId}`)
-        .then(res => res.json())
-        .then(data => {
-          userProjects = Array.isArray(data) ? data : [];
-          populateDropdown(userProjects);
-          loadingState.style.display = 'none';
-          mainState.style.display = 'block';
-        })
-        .catch(err => {
-          console.error("Failed fetching user projects:", err);
-          loadingState.innerText = "Error loading your workspace projects.";
-        });
-    });
-
-    closeBtn.addEventListener('click', () => modal.style.display = 'none');
-    window.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
-
-    projectSelect.addEventListener('change', function() {
-      if (this.value === 'NEW_PROJECT') {
-        newGroup.style.display = 'block';
-      } else {
-        newGroup.style.display = 'none';
-      }
-    });
-
-    function populateDropdown(projects) {
-      projectSelect.innerHTML = '';
-      if (projects.length === 0) {
-        const opt = document.createElement('option');
-        opt.value = 'NEW_PROJECT';
-        opt.innerText = 'Create a New Project...';
-        projectSelect.appendChild(opt);
-        newGroup.style.display = 'block';
-      } else {
-        projects.forEach(proj => {
-          const opt = document.createElement('option');
-          opt.value = proj.id;
-          opt.innerText = proj.project_name;
-          projectSelect.appendChild(opt);
-        });
-        const dividerOpt = document.createElement('option');
-        dividerOpt.value = 'NEW_PROJECT';
-        dividerOpt.innerText = '+ Create a New Project...';
-        projectSelect.appendChild(dividerOpt);
-        newGroup.style.display = 'none';
-      }
-    }
-
-    confirmBtn.addEventListener('click', function() {
-      const isNew = projectSelect.value === 'NEW_PROJECT';
-      const selectedProjectId = isNew ? null : projectSelect.value;
-      const newName = isNew ? newProjectInput.value.trim() : null;
-
-      if (isNew && !newName) {
-        showStatus('Please name your new project.', 'red');
-        return;
-      }
-
-      // Capture the LIVE selected variant ID right now at the precise moment of submission
-      const activeVariantId = getActiveVariantId();
-      // Pull the exact, matching specifications snapshot out of our registry
-      const activeVariantMetadata = shopifyVariantRegistry[activeVariantId] || {
-        productTitle: "{{ product.title | escape }}",
-        variantTitle: "Selected Variant",
-        priceFormatted: "N/A",
-        thumbnailUrl: "{{ product.featured_image | img_url: '240x240' }}",
-        pRating: "N/A",
-        sku: "{{ product.selected_or_first_available_variant.sku | escape }}" // Added fallback SKU safety
-      };
-
-      showStatus('Saving item...', 'blue');
-
-      const payload = {
-        customerId: customerId,
-        projectId: selectedProjectId,
-        newProjectName: newName,
-        variantId: activeVariantId,
-        productHandle: productHandle,
-        variantInfo: activeVariantMetadata 
-      };
-
-      fetch('/apps/projects/api/projects/add-item', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(resData => {
-        if (resData.success) {
-          showStatus('✨ Added to project successfully!', 'green');
-          newProjectInput.value = '';
-          setTimeout(() => { modal.style.display = 'none'; }, 1500);
-        } else {
-          showStatus('Error: ' + (resData.error || 'Unable to save.'), 'red');
-        }
-      })
-      .catch(err => {
-        console.error("Critical submission failure:", err);
-        showStatus('Network delivery failed.', 'red');
-      });
-    });
-
-    function showStatus(msg, color) {
-      statusDiv.style.display = 'block';
-      statusDiv.innerText = msg;
-      if (color === 'green') {
-        statusDiv.style.background = '#e6f4ea';
-        statusDiv.style.color = '#137333';
-      } else if (color === 'red') {
-        statusDiv.style.background = '#fce8e6';
-        statusDiv.style.color = '#c5221f';
-      } else {
-        statusDiv.style.background = '#e8f0fe';
-        statusDiv.style.color = '#1a73e8';
-      }
+    if (val === "__CREATE_NEW__") {
+      newProjInput.style.display = 'block';
+      sectionWrapper.style.display = 'block';
+      populateSectionsDropdown([]); // No existing sections for a brand new project
+    } else if (val) {
+      sectionWrapper.style.display = 'block';
+      const selectedProj = workspaceCachedData.find(p => p.id === val);
+      populateSectionsDropdown(selectedProj ? selectedProj.sections : []);
+    } else {
+      sectionWrapper.style.display = 'none';
     }
   });
+
+  function populateSectionsDropdown(sections) {
+    sectionSelect.innerHTML = '<option value="">-- Choose Existing Room/Area --</option>';
+    sections.forEach(sec => {
+      const opt = document.createElement('option');
+      opt.value = sec.id;
+      opt.textContent = sec.section_name;
+      sectionSelect.appendChild(opt);
+    });
+    const createOpt = document.createElement('option');
+    createOpt.value = "__CREATE_NEW__";
+    createOpt.textContent = "[+ Create New Room/Area]";
+    sectionSelect.appendChild(createOpt);
+  }
+
+  sectionSelect.addEventListener('change', function() {
+    newSecInput.style.display = (this.value === "__CREATE_NEW__") ? 'block' : 'none';
+  });
+
+  // 🚀 Form Dispatch Processing Core Pipeline
+  submitBtn.addEventListener('click', async function() {
+    let targetProjectId = projectSelect.value;
+    let targetSectionId = sectionSelect.value;
+
+    if (!targetProjectId) return alert("Please select or create a project board.");
+    if (!targetSectionId) return alert("Please select or create a room/area.");
+
+    submitBtn.innerText = "ADDING...";
+    submitBtn.disabled = true;
+
+    try {
+      // 1. Check if we need to create a new project first
+      if (targetProjectId === "__CREATE_NEW__") {
+        const newProjName = newProjInput.value.trim();
+        if (!newProjName) throw new Error("Please enter a new project name.");
+
+        const resProj = await fetch('/apps/projects/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newProjName, customer_id: customerId })
+        }).then(r => r.json());
+
+        if (!resProj.success) throw new Error("Failed to generate new project board container.");
+        targetProjectId = resProj.data[0].id;
+      }
+
+      // 2. Check if we need to create a new section/room
+      if (targetSectionId === "__CREATE_NEW__") {
+        const newSecName = newSecInput.value.trim();
+        if (!newSecName) throw new Error("Please enter a room/area name.");
+
+        const resSec = await fetch('/apps/projects/api/sections/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: targetProjectId, sectionName: newSecName })
+        }).then(r => r.json());
+
+        if (!resSec.success) throw new Error("Failed to generate row layout component.");
+        targetSectionId = resSec.sectionId;
+      }
+
+      // 3. Collect active product profile dimensions
+      const variantId = window.ShopifyAnalytics.meta.product.variants[0].id || "{{ product.selected_or_first_available_variant.id }}";
+      const productHandle = "{{ product.handle }}";
+      
+      const variantInfo = {
+        productTitle: "{{ product.title | escape }}",
+        variantTitle: "{{ product.selected_or_first_available_variant.title | escape }}",
+        sku: "{{ product.selected_or_first_available_variant.sku }}",
+        priceFormatted: "{{ product.selected_or_first_available_variant.price | money }}",
+        thumbnailUrl: "{{ product.featured_image | img_url: '240x240' }}",
+        pRating: "N/A"
+      };
+
+      // 4. Inject structural record spec into target row grid
+      const finalRes = await fetch('/apps/projects/api/items/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sectionId: targetSectionId,
+          variantId: variantId,
+          productHandle: productHandle,
+          variantInfo: variantInfo
+        })
+      }).then(r => r.json());
+
+      if (finalRes.success) {
+        alert("✨ Success! Material saved cleanly inside your workspace profile.");
+        modal.style.display = 'none';
+        window.location.reload();
+      } else {
+        throw new Error(finalRes.error);
+      }
+
+    } catch (err) {
+      alert("❌ Save Failure: " + err.message);
+    } finally {
+      submitBtn.innerText = "ADD TO PROJECT";
+      submitBtn.disabled = false;
+    }
+  });
+});
 </script>
 
 {% schema %}
 {
-  "name": "Add to Project Button",
+  "name": "Add to Project Trigger",
   "target": "section",
-  "templates": ["product"],
   "settings": []
 }
 {% endschema %}
