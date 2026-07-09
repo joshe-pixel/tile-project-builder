@@ -1,180 +1,192 @@
-import {useState, useEffect} from 'preact/hooks';
-import {useLocation} from 'preact-iso';
-import {listFAQs, primeFAQ} from '../../../../shared/models/faq';
-import {gidToId} from '../../../../shared/utils/gid';
-
-/** @typedef {import('../../../../shared/models/faq').FAQSummary} FAQSummary */
+import { useState, useEffect } from 'preact/hooks';
 
 export default function HomePage() {
-  const location = useLocation();
-  const [faqs, setFaqs] = useState(/** @type {FAQSummary[]} */ ([]));
+  const [shopDomain, setShopDomain] = useState('');
+  const [companyName, setCompanyName] = useState('EARP BROS');
+  const [primaryColor, setPrimaryColor] = useState('#0f172a');
+  const [headerSubtitle, setHeaderSubtitle] = useState('Surface & Tile Specification Brief');
+  const [footerDisclaimer, setFooterDisclaimer] = useState('Provisional layouts. Verify ratings against physical samples before site installation.');
+  
+  // Dashboard Settings Matrix Flags
+  const [showDashSubtotals, setShowDashSubtotals] = useState(true);
+  const [showDashMetafields, setShowDashMetafields] = useState(true);
+  const [showDashPrice, setShowDashPrice] = useState(true);
+  const [showDashActions, setShowDashActions] = useState(true);
+
+  // PDF Technical Column & Metadata Rules
+  const [showPdfAccountId, setShowPdfAccountId] = useState(true);
+  const [showPdfGeneratedDate, setShowPdfGeneratedDate] = useState(true);
+  const [pdfSectionIcon, setPdfSectionIcon] = useState('triangle');
+  const [showPdfPricing, setShowPdfPricing] = useState(true);
+  const [showPdfPRating, setShowPdfPRating] = useState(true);
+  const [showPdfFooter, setShowPdfFooter] = useState(true);
+
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shop = params.get('shop') || 'earp-bros.myshopify.com';
+    setShopDomain(shop);
+
     (async () => {
-      setFaqs(await listFAQs());
+      try {
+        const res = await fetch(`https://shopify-projects-app.onrender.com/api/admin/get-settings?shop=${shop}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings) {
+            setCompanyName(data.settings.company_name || 'EARP BROS');
+            setPrimaryColor(data.settings.primary_color || '#0f172a');
+            setHeaderSubtitle(data.settings.header_subtitle || 'Surface & Tile Specification Brief');
+            setFooterDisclaimer(data.settings.footer_disclaimer || '');
+            
+            // Map Database Row States Back to Dashboard Components
+            setShowDashSubtotals(data.settings.show_dash_subtotals !== false);
+            setShowDashMetafields(data.settings.show_dash_metafields !== false);
+            setShowDashPrice(data.settings.show_dash_price !== false);
+            setShowDashActions(data.settings.show_dash_actions !== false);
+
+            // Map Database Row States Back to PDF Vectors
+            setShowPdfAccountId(data.settings.show_pdf_account_id !== false);
+            setShowPdfGeneratedDate(data.settings.show_pdf_generated_date !== false);
+            setPdfSectionIcon(data.settings.pdf_section_icon || 'triangle');
+            setShowPdfPricing(data.settings.show_pricing !== false);
+            setShowPdfPRating(data.settings.show_p_rating !== false);
+            setShowPdfFooter(data.settings.show_footer_disclaimer !== false);
+          }
+        }
+      } catch (e) {
+        console.error("Initializing system configuration layout hooks...", e);
+      }
       setLoading(false);
     })();
   }, []);
 
-  /**
-   * @param {Event} event
-   * @param {FAQSummary} faq
-   */
-  const openFAQ = (event, faq) => {
-    const mouseEvent = /** @type {MouseEvent} */ (event);
-    if (
-      mouseEvent.defaultPrevented ||
-      mouseEvent.button !== 0 ||
-      mouseEvent.metaKey ||
-      mouseEvent.altKey ||
-      mouseEvent.ctrlKey ||
-      mouseEvent.shiftKey
-    ) {
-      return;
-    }
+  const handleSave = async (e) => {
+    if (e) e.preventDefault();
+    setSaving(true);
 
-    const id = gidToId(faq.id);
-    mouseEvent.preventDefault();
-    primeFAQ(id, faq);
-    location.route(`/faq/${id}`);
+    const payload = {
+      shopDomain,
+      companyName,
+      primaryColor,
+      headerSubtitle,
+      footerDisclaimer,
+      showDashSubtotals,
+      showDashMetafields,
+      showDashPrice,
+      showDashActions,
+      showPdfAccountId,
+      showPdfGeneratedDate,
+      pdfSectionIcon,
+      showPdfPricing,
+      showPdfPRating,
+      showPdfFooter
+    };
+
+    try {
+      const res = await fetch('https://shopify-projects-app.onrender.com/api/admin/update-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        shopify.toast.show('✨ Master Control panel preferences committed!');
+      } else {
+        shopify.toast.show('❌ Update Rejected by Database.');
+      }
+    } catch (err) {
+      shopify.toast.show('❌ Infrastructure transport connection lost.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const hasFaqs = faqs.length > 0;
+  if (loading) {
+    return (
+      <s-page heading="Loading Core Manifest...">
+        <s-section><s-paragraph>Parsing structural layout preferences...</s-paragraph></s-section>
+      </s-page>
+    );
+  }
 
   return (
-    <s-page heading="FAQs">
-      <s-button slot="primary-action" variant="primary" href="/faq/new">
-        Create FAQ
+    <s-page heading="App Configuration Hub">
+      <s-button slot="primary-action" variant="primary" onClick={handleSave} disabled={saving}>
+        {saving ? 'Publishing Changes...' : 'Save Configuration Changes'}
       </s-button>
 
-      {!loading && (
-        <s-section slot="aside" heading={shopify.i18n.translate('welcome', {target: shopify.extension.target})}>
-          <s-stack direction="inline" gap="small" alignItems="center">
-            <s-paragraph>
-              <s-text>Framework: </s-text>
-              <s-link href="https://preactjs.com/" target="_blank">
-                Preact
-              </s-link>
-            </s-paragraph>
-            <s-link href="https://preactjs.com/" target="_blank">
-              <s-box maxInlineSize="24px" maxBlockSize="24px">
-                <s-image src="./preact-logo.png" alt="Preact logo" />
-              </s-box>
-            </s-link>
-          </s-stack>
-          <s-stack direction="inline" gap="small" alignItems="center">
-            <s-paragraph>
-              <s-text>Interface: </s-text>
-              <s-link
-                href="https://shopify.dev/docs/api/app-home/web-components"
-                target="_blank"
-              >
-                Polaris web components
-              </s-link>
-            </s-paragraph>
-            <s-link
-              href="https://shopify.dev/docs/api/app-home/web-components"
-              target="_blank"
-            >
-              <s-box maxInlineSize="32px" maxBlockSize="32px">
-                <s-image src="./polaris-icon.png" alt="Polaris logo" />
-              </s-box>
-            </s-link>
-          </s-stack>
-          <s-stack direction="inline" gap="small" alignItems="center">
-            <s-paragraph>
-              <s-text>API: </s-text>
-              <s-link
-                href="https://shopify.dev/docs/api/admin-graphql"
-                target="_blank"
-              >
-                GraphQL Admin API
-              </s-link>
-            </s-paragraph>
-            <s-link
-              href="https://shopify.dev/docs/api/admin-graphql"
-              target="_blank"
-            >
-              <s-box maxInlineSize="24px" maxBlockSize="24px">
-                <s-image src="./graphql-logo.png" alt="GraphQL logo" />
-              </s-box>
-            </s-link>
-          </s-stack>
+      {/* SECTION 1: CUSTOMER PORTAL WORKSPACE CONFIGURATION */}
+      <s-section heading="1. Customer Project Dashboard Visibility">
+        <s-stack direction="block" gap="base">
           <s-paragraph>
-            <s-text>Database: </s-text>
-            <s-link
-              href="https://shopify.dev/docs/apps/build/custom-data/metaobjects"
-              target="_blank"
-            >
-              Metaobjects
-            </s-link>
+            <s-text color="subdued">Control which explicit elements, action nodes, and product spec fields render inside the frontend customer-facing profile dashboard workspace.</s-text>
           </s-paragraph>
-        </s-section>
-      )}
+          
+          <s-checkbox 
+            label="Render Room Area and Complete Project Board Subtotal Calculations" 
+            checked={showDashSubtotals} 
+            onInput={(e) => setShowDashSubtotals(e.target.checked)} 
+          />
+          <s-checkbox 
+            label="Display Item Variant Technical Metafields (Availability, Sizing, Ratings)" 
+            checked={showDashMetafields} 
+            onInput={(e) => setShowDashMetafields(e.target.checked)} 
+          />
+          <s-checkbox 
+            label="Display Unit Price and Packaging Specs on Product Cards" 
+            checked={showDashPrice} 
+            onInput={(e) => setShowDashPrice(e.target.checked)} 
+          />
+          <s-checkbox 
+            label="Expose Customer Interaction Action Nodes (Duplicate Card, Remove Card, Move Room)" 
+            checked={showDashActions} 
+            onInput={(e) => setShowDashActions(e.target.checked)} 
+          />
+        </s-stack>
+      </s-section>
 
-      {!loading && !hasFaqs && (
-        <s-section accessibilityLabel="Empty state section">
-          <s-grid gap="base" justifyItems="center" paddingBlock="large-400">
-            <s-box maxInlineSize="200px" maxBlockSize="200px">
-              <s-image
-                aspectRatio="1/0.5"
-                src="https://cdn.shopify.com/static/images/polaris/patterns/callout.png"
-                alt="Illustration of FAQ creation"
-              />
-            </s-box>
-            <s-grid justifyItems="center" maxInlineSize="450px" gap="base">
-              <s-stack alignItems="center">
-                <s-heading>Start creating FAQs</s-heading>
-                <s-paragraph>
-                  Create frequently asked questions to boost sales.
-                </s-paragraph>
-              </s-stack>
-              <s-button-group>
-                <s-button
-                  slot="primary-action"
-                  accessibilityLabel="Add a new FAQ"
-                  href="/faq/new"
-                >
-                  Create FAQ
-                </s-button>
-              </s-button-group>
-            </s-grid>
-          </s-grid>
-        </s-section>
-      )}
+      {/* SECTION 2: PDF RENDER ENGINE CONFIGURATION */}
+      <s-section heading="2. Printed PDF Engine Metadata & Columns">
+        <s-stack direction="block" gap="base">
+          <s-paragraph>
+            <s-text color="subdued">Configure the default typography branding variables and structural field flags printed across compilation export documents.</s-text>
+          </s-paragraph>
+          
+          <s-text-field label="Corporate Logo Text / Title Header Name" value={companyName} onInput={(e) => setCompanyName(e.target.value)} />
+          <s-text-field label="Document Description Subtitle Subhead Line" value={headerSubtitle} onInput={(e) => setHeaderSubtitle(e.target.value)} />
+          <s-text-field label="Header Branding Accent Tint Identifier (Hex)" value={primaryColor} onInput={(e) => setPrimaryColor(e.target.value)} />
+          <s-text-area label="Global Bottom Policy Liability & Legal Terms Declaration" value={footerDisclaimer} rows="3" onInput={(e) => setFooterDisclaimer(e.target.value)} />
+          
+          <div style={{ borderTop: '1px solid #eaeaea', margin: '15px 0' }}></div>
+          
+          {/* Metadata Flags */}
+          <s-checkbox label="Display Global NetSuite Sync Account ID: Tracking Metrics" checked={showPdfAccountId} onInput={(e) => setShowPdfAccountId(e.target.checked)} />
+          <s-checkbox label="Stamp Generation Date/Time Verification Metadata Code" checked={showPdfGeneratedDate} onInput={(e) => setShowPdfGeneratedDate(e.target.checked)} />
+          
+          {/* Column Toggle Options */}
+          <s-checkbox label="Render Material Card Item Base Pricing Grid Columns" checked={showPdfPricing} onInput={(e) => setShowPdfPricing(e.target.checked)} />
+          <s-checkbox label="Render Slip P-Rating Technical Engineering Specification Fields" checked={showPdfPRating} onInput={(e) => setShowPdfPRating(e.target.checked)} />
+          <s-checkbox label="Output Global Footprint Liability Disclaimer Information Block" checked={showPdfFooter} onInput={(e) => setShowPdfFooter(e.target.checked)} />
 
-      {!loading && hasFaqs && (
-        <s-section padding="none" accessibilityLabel="FAQs table section">
-          <s-table>
-            <s-table-header-row>
-              <s-table-header listSlot="primary">Question</s-table-header>
-              <s-table-header>FAQ page</s-table-header>
-            </s-table-header-row>
-            <s-table-body>
-              {faqs.map((faq) => (
-                <s-table-row key={faq.id}>
-                  <s-table-cell>
-                    <s-link
-                      href={`/faq/${gidToId(faq.id)}`}
-                      onClick={(event) => openFAQ(event, faq)}
-                    >
-                      {faq.question || 'Untitled'}
-                    </s-link>
-                  </s-table-cell>
-                  <s-table-cell>
-                    <s-badge
-                      tone={faq.show_on_faq_page ? 'auto' : 'neutral'}
-                    >
-                      {faq.show_on_faq_page ? 'Shown' : 'Hidden'}
-                    </s-badge>
-                  </s-table-cell>
-                </s-table-row>
-              ))}
-            </s-table-body>
-          </s-table>
-        </s-section>
-      )}
+          {/* Section Accordion Directory Icon Selector Dropdown */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left', marginTop: '5px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#202223' }}>Select Section Accordion Directory Icon Format</label>
+            <select 
+              value={pdfSectionIcon} 
+              onChange={(e) => setPdfSectionIcon(e.target.value)}
+              style={{ width: '100%', height: '36px', padding: '0 10px', boxSizing: 'border-box', border: '1px solid #8c9196', borderRadius: '4px', background: '#fff', color: '#000' }}
+            >
+              <option value="triangle">Triangular Arrow Indicator Shape (▶ / ▼)</option>
+              <option value="folder">System Asset Directory Icons (📁 / 📂)</option>
+              <option value="bullet">Clean Standard Circular List Bullets (•)</option>
+              <option value="none">Zero Icon Indentation Format (Hidden Layouts)</option>
+            </select>
+          </div>
+        </s-stack>
+      </s-section>
     </s-page>
   );
 }

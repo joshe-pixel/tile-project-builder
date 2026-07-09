@@ -2,11 +2,11 @@
 
 client_id = "acab7efb14bc18e294a02a8b804d280f"
 name = "Tile Project Builder"
-application_url = "https://example.com"
+application_url = "https://shopify-projects-app.onrender.com/"
 embedded = true
 
 [build]
-automatically_update_urls_on_dev = false
+automatically_update_urls_on_dev = true
 
 [webhooks]
 api_version = "2026-04"
