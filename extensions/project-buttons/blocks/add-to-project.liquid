@@ -13,8 +13,11 @@
 </style>
 
 <button type="button" id="ep-trigger-modal-btn" class="button button--secondary" 
-        style="width: 100%; padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px;">
-  Add to Project/Samples
+        style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; background-color: #fff; color: #000; border: 1px solid #000; transition: all 0.3s ease;">
+  <svg id="ep-heart-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+  </svg>
+  <span id="ep-trigger-text">Add to My Project</span>
 </button>
 
 <div id="epProjectModal" style="display: none; position: fixed; z-index: 999999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; font-family: sans-serif;">
@@ -71,10 +74,11 @@ document.addEventListener('DOMContentLoaded', function() {
       "{{ variant.id }}": {
         title: {{ variant.title | json }},
         priceFormatted: "{{ variant.price | money }}",
-        thumbnailUrl: {% if variant.image %}"{{ variant.image | img_url: '100x100' }}"{% else %}"{{ product.featured_image | img_url: '100x100' }}"{% endif %},
+        thumbnailUrl: {% if variant.image %}"{{ variant.image | img_url: '800x800' }}"{% else %}"{{ product.featured_image | img_url: '800x800' }}"{% endif %},
         sku: {{ variant.sku | json }},
         pRating: "{{ variant.metafields.technical.pendulum.value | default: variant.metafields.custom.p_rating | escape }}",
-        units: "{{ variant.metafields.information.units.value | default: 'm²' | escape }}"
+        units: "{{ variant.metafields.information.units.value | default: 'm²' | escape }}",
+        boxConversion: {{ variant.metafields.technical.unitsbox.value | default: 1.0 }}
       }{% unless forloop.last %},{% endunless %}
     {% endfor %}
   };
@@ -170,7 +174,8 @@ document.addEventListener('DOMContentLoaded', function() {
           thumbnailUrl: activeVariantData.thumbnailUrl,
           sku: activeVariantData.sku,
           pRating: activeVariantData.pRating,
-          units: activeVariantData.units
+          units: activeVariantData.units,
+          boxConversion: activeVariantData.boxConversion
         }
       };
 
@@ -188,7 +193,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!data.success) throw new Error(data.error || "Supabase database error");
         
         modal.style.display = 'none';
-        triggerBtn.innerText = "VIEW IN PROJECT/SAMPLES";
+        document.getElementById('ep-trigger-text').innerText = "VIEW IN PROJECT/SAMPLES";
+document.getElementById('ep-heart-icon').setAttribute('fill', 'currentColor');
         triggerBtn.setAttribute('data-state', 'view-mode');
         triggerBtn.style.background = "#000";
         triggerBtn.style.color = "#fff";
