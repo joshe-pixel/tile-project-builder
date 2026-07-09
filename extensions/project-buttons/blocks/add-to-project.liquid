@@ -3,7 +3,7 @@
   Only users whose emails are explicitly added to this comma-separated string 
   will see the 'Add to Project' button interface on your live store.
 {%- endcomment -%}
-{%- assign allowed_emails_string = "alisonv@earp.com.au" -%}
+{%- assign allowed_emails_string = "alisonv@earp.com.au, joshe@earp.com.au, harryp@earp.com.au, lisap@earp.com.au, sophiem@earp.com.au, jennip@earp.com.au, richarde@earp.com.au, chloet@earp.com.au, karindam@earp.com.au, alexe@earp.com.au, ashleed@earp.com.au, judithh@earp.com.au, rachell@earp.com.au" -%}
 {%- assign allowed_emails = allowed_emails_string | split: "," -%}
 
 {% if customer and allowed_emails contains customer.email %}
