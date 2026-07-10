@@ -80,7 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
         units: "{{ variant.metafields.information.units.value | default: 'm²' | escape }}",
         boxConversion: {{ variant.metafields.technical.unitsbox.value | default: 1.0 }},
         inventoryQuantity: {{ variant.inventory_quantity | default: 0 }},
-        inventoryPolicy: "{{ variant.inventory_policy | escape }}"
+        inventoryPolicy: "{{ variant.inventory_policy | escape }}",
+        leadTime: {{ variant.metafields.technical.leadtime.value | json | default: '[]' }}
       }{% unless forloop.last %},{% endunless %}
     {% endfor %}
   };
@@ -179,7 +180,8 @@ document.addEventListener('DOMContentLoaded', function() {
           units: activeVariantData.units,
           boxConversion: activeVariantData.boxConversion,
           inventoryQuantity: activeVariantData.inventoryQuantity,
-          inventoryPolicy: activeVariantData.inventoryPolicy
+          inventoryPolicy: activeVariantData.inventoryPolicy,
+          leadTime: activeVariantData.leadTime
         }
       };
 
