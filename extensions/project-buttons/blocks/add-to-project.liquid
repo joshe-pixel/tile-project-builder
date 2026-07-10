@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   let cachedWorkspaceData = [];
 
-  // 🎯 THE FIX: Build a comprehensive map of all variant data dynamically
+  // 🎯 THE FIX: Build a comprehensive map of all variant data dynamically, including inventory checks!
   const variantDictionary = {
     {% for variant in product.variants %}
       "{{ variant.id }}": {
@@ -78,7 +78,9 @@ document.addEventListener('DOMContentLoaded', function() {
         sku: {{ variant.sku | json }},
         pRating: "{{ variant.metafields.technical.pendulum.value | default: variant.metafields.custom.p_rating | escape }}",
         units: "{{ variant.metafields.information.units.value | default: 'm²' | escape }}",
-        boxConversion: {{ variant.metafields.technical.unitsbox.value | default: 1.0 }}
+        boxConversion: {{ variant.metafields.technical.unitsbox.value | default: 1.0 }},
+        inventoryQuantity: {{ variant.inventory_quantity | default: 0 }},
+        inventoryPolicy: "{{ variant.inventory_policy | escape }}"
       }{% unless forloop.last %},{% endunless %}
     {% endfor %}
   };
@@ -175,7 +177,9 @@ document.addEventListener('DOMContentLoaded', function() {
           sku: activeVariantData.sku,
           pRating: activeVariantData.pRating,
           units: activeVariantData.units,
-          boxConversion: activeVariantData.boxConversion
+          boxConversion: activeVariantData.boxConversion,
+          inventoryQuantity: activeVariantData.inventoryQuantity,
+          inventoryPolicy: activeVariantData.inventoryPolicy
         }
       };
 
@@ -194,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         modal.style.display = 'none';
         document.getElementById('ep-trigger-text').innerText = "VIEW IN PROJECT/SAMPLES";
-document.getElementById('ep-heart-icon').setAttribute('fill', 'currentColor');
+        document.getElementById('ep-heart-icon').setAttribute('fill', 'currentColor');
         triggerBtn.setAttribute('data-state', 'view-mode');
         triggerBtn.style.background = "#000";
         triggerBtn.style.color = "#fff";
