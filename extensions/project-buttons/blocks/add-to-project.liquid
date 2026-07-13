@@ -1,12 +1,10 @@
 {%- comment -%}
   🎯 APPROVED ACCESS CONTROL LIST (ACL)
-  Only users whose emails are explicitly added to this comma-separated string 
+  Only users whose email addresses contain the official company domain
   will see the 'Add to Project' button interface on your live store.
 {%- endcomment -%}
-{%- assign allowed_emails_string = "alisonv@earp.com.au,joshe@earp.com.au,harryp@earp.com.au,lisap@earp.com.au,sophiem@earp.com.au,jennip@earp.com.au,richarde@earp.com.au,chloet@earp.com.au,karindam@earp.com.au,alexe@earp.com.au,ashleed@earp.com.au,judithh@earp.com.au,rachell@earp.com.au" -%}
-{%- assign allowed_emails = allowed_emails_string | split: "," -%}
 
-{% if customer and allowed_emails contains customer.email %}
+{% if customer and customer.email contains "@earp.com.au" %}
 <style>
   #epProjectModal input::placeholder { color: #999 !important; }
   #epProjectModal select, #epProjectModal input { box-sizing: border-box !important; }
@@ -68,7 +66,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   let cachedWorkspaceData = [];
 
-  // 🎯 THE FIX: Build a comprehensive map of all variant data dynamically, including inventory checks!
   const variantDictionary = {
     {% for variant in product.variants %}
       "{{ variant.id }}": {
@@ -104,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Primary Button Routing Logic
   triggerBtn.addEventListener('click', function() {
-    if (triggerBtn.getAttribute('data-state') === 'view-mode') {
+    if (triggerBtn.getAttribute('data-state', 'view-mode')) {
       window.location.href = '/apps/projects';
     } else {
       modal.style.display = 'flex';
@@ -154,12 +151,10 @@ document.addEventListener('DOMContentLoaded', function() {
     submitBtn.disabled = true;
 
     try {
-      // 🎯 Grab the active variant ID that your main-product.liquid script is syncing
       const activeVariantId = document.querySelector('input[name="id"]')?.value || 
                               document.querySelector('select[name="id"]')?.value || 
                               "{{ product.selected_or_first_available_variant.id }}";
       
-      // 🎯 Pull all the correct details straight out of our variant dictionary
       const activeVariantData = variantDictionary[activeVariantId] || variantDictionary["{{ product.selected_or_first_available_variant.id }}"];
 
       const payload = {
