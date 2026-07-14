@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!data.success) throw new Error(data.error || "Supabase database error");
         
         modal.style.display = 'none';
-        document.getElementById('ep-trigger-text').innerText = "VIEW IN PROJECT/SAMPLES";
+        document.getElementById('ep-trigger-text').innerText = "VIEW IN MY PROJECTS";
         document.getElementById('ep-heart-icon').setAttribute('fill', 'currentColor');
         triggerBtn.setAttribute('data-state', 'view-mode');
         triggerBtn.style.background = "#000";
